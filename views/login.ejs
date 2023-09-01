@@ -17,6 +17,12 @@
       <li><%= error.message %></li>
       <% }) %> <% } %>
     </ul> -->
+    <ul>
+      <% if(messages.success_msg) { %>
+      <li><%= messages.success_msg %></li>
+      <% } %>
+    </ul>
+
     <form action="/users/login" method="POST">
      
         <input

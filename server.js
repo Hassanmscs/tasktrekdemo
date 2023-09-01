@@ -1,13 +1,28 @@
 const express = require("express");
+
 const app = express();
 const { pool } = require("./dbConfig");
+const bcrypt = require("bcrypt");
+const flash = require("express-flash");
+const session = require("express-session");
 
 const PORT = process.env.PORT || 4000;
 
 // Parses details from a form
-
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
+
+app.use(
+  session({
+    // Key we want to keep secret which will encrypt all of our information
+    secret: "secret",
+    // Should we resave our session variables if nothing has changes which we dont
+    resave: false,
+    // Save empty value if there is no vaue which we do not want to do
+    saveUninitialized: false
+  })
+);
+app.use(flash());
 
 app.get("/", (req, res) => {
     res.render("index");
@@ -25,36 +40,76 @@ app.get("/users/dashboard",(req, res) => {
 });
 
 
-app.post("/users/register",(req, res) => {
+app.post("/users/register", async (req, res) => {
     let { name, email, password, password2 } = req.body;
 
-    // console.log({
-    //   name,
-    //   email,
-    //   password,
-    //   password2
-    // });
-    console.log(name, email, password,password2);
+    console.log({
+      name,
+      email,
+      password,
+      password2
+    });
+  
 
 
+    let errors = [];
 
-    // let errors = [];
-
-    // if (!name || !email || !password || !password2) {
-    //     errors.push({ message: "Please enter all fields" });
-    //   }
+    if (!name || !email || !password || !password2) {
+        errors.push({ message: "Please enter all fields" });
+      }
     
-    //   if (password.length < 6) {
-    //     errors.push({ message: "Password must be a least 6 characters long" });
-    //   }
+      if (password.length < 6) {
+        errors.push({ message: "Password must be a least 6 characters long" });
+      }
     
-    //   if (password !== password2) {
-    //     errors.push({ message: "Passwords do not match" });
-    //   }
+      if (password !== password2) {
+        errors.push({ message: "Passwords do not match" });
+      }
     
-    //   if (errors.length > 0) {
-    //     res.render("register", { errors });
-    //   } 
+      if (errors.length > 0) {
+        res.render("register", { errors });
+      } 
+      else {
+        hashedPassword = await bcrypt.hash(password, 10);
+        console.log(hashedPassword);
+        // Validation passed
+        pool.query(
+          `SELECT * FROM users
+            WHERE email = $1`,
+          [email],
+          (err, results) => {
+            if (err) {
+              throw err;
+              //console.log(err);
+            }
+           console.log(results.rows);
+    
+            if (results.rows.length > 0) {
+              errors.push({ message: "Email already registered"});
+             res.render("register", {errors});
+             // return res.render("register", {
+             //  message: "Email already registered"
+           //  });
+            
+            } else {
+              pool.query(
+                `INSERT INTO users (name, email, password)
+                    VALUES ($1, $2, $3)
+                    RETURNING id, password`,
+                [name, email, hashedPassword],
+                (err, results) => {
+                  if (err) {
+                    throw err;
+                  }
+                  console.log(results.rows);
+                  req.flash("success_msg", "You are now registered. Please log in");
+                  res.redirect("/users/login");
+                }
+              );
+            }
+          }
+        );
+      }
 });
 
 
