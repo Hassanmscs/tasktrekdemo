@@ -12,14 +12,21 @@
   </head>
   <body>
     <h1>Login</h1>
-    <!-- <ul>
+    <ul>
       <% if (typeof errors != 'undefined') { %> <% errors.forEach(error => { %>
       <li><%= error.message %></li>
       <% }) %> <% } %>
-    </ul> -->
+    </ul>
+
     <ul>
       <% if(messages.success_msg) { %>
       <li><%= messages.success_msg %></li>
+      <% } %>
+    </ul>
+
+    <ul>
+      <% if (messages.error) { %>
+      <li><%= messages.error %></li>
       <% } %>
     </ul>
 
@@ -37,8 +44,8 @@
       <div>
         <input
           type="password"
-          id="password2"
-          name="password2"
+          id="password"
+          name="password"
           placeholder="Confirm Password"
           required
         />
@@ -47,7 +54,7 @@
         <input type="submit" value="Login" />
       </div>
 
-      <a href="/users/Register">Login</a>
+      <a href="/users/Register">Register</a>
     </form>
 
     
